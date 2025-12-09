@@ -8,6 +8,7 @@ public class PlayerWeaponController : MonoBehaviour
     private Player player;
     private const float REFERENCE_BULLET_SPEED = 20f; // 기본 스피드 질량 공식
 
+    [SerializeField] private Weapon_Data defaultWeaponData;
     [SerializeField] private Weapon currentWeapon;
     private bool weaponReady;
     private bool isShooting;
@@ -53,7 +54,11 @@ public class PlayerWeaponController : MonoBehaviour
 
     #region Slots management - Pickup / Equip / Drop / Ready Weapon
 
-    private void EquipStartingWeapon() => EquipWeapon(0);
+    private void EquipStartingWeapon()
+    {
+        weaponSlots[0] = new Weapon(defaultWeaponData);
+        EquipWeapon(0);
+    }
 
     private void EquipWeapon(int i)
     {
@@ -68,10 +73,12 @@ public class PlayerWeaponController : MonoBehaviour
         // CameraManager.instance.ChangeCameraDistance(currentWeapon.cameraDistance);
     }
 
-    public void PickupWeapon(Weapon newWeapon)
+    public void PickupWeapon(Weapon_Data newWeaponData)
     {
         if (weaponSlots.Count >= maxSlots)
             return;
+
+        Weapon newWeapon = new Weapon(newWeaponData);
 
         weaponSlots.Add(newWeapon);
         player.weaponVisuals.SwitchOnBackupWeaponModel();
@@ -118,7 +125,7 @@ public class PlayerWeaponController : MonoBehaviour
     {
         currentWeapon.bulletsInMagazine--;
 
-        GameObject newBullet = ObjectPool.instance.GetBullet();
+        GameObject newBullet = ObjectPool.instance.GetObject(bulletPrefab);
         //Instantiate(bulletPrefab, gunPoint.position, Quaternion.LookRotation(gunPoint.forward));
 
         newBullet.transform.position = Gunpoint().position;
