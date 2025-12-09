@@ -3,17 +3,20 @@ using UnityEngine;
 public class PlayerAnimationEvents : MonoBehaviour
 {
     private PlayerWeaponVisuals visualController;
+    private PlayerWeaponController weaponController;
 
     private void Start()
     {
         visualController = GetComponentInParent<PlayerWeaponVisuals>();
+        weaponController = GetComponentInParent<PlayerWeaponController>();
     }
 
     public void ReloadIsOver()
     {
         visualController.MaximizeRigWeight();
+        weaponController.CurrentWeapon().RefillBullets();
 
-        // 탄약 다시 채우기
+        weaponController.SetWeaponReady(true);
     }
 
     public void ReturnRig()
@@ -22,8 +25,10 @@ public class PlayerAnimationEvents : MonoBehaviour
         visualController.MaximizeLeftHandWeight();
     }
 
-    public void WeaponGrabIsOver()
+    public void WeaponEquipingIsOver()
     {
-        visualController.SetBusyGrabbingWeaponTo(false);
+        weaponController.SetWeaponReady(true);
     }
+
+    public void SwitchOnWeaponModel() => visualController.SwitchOnCurrentWeaponModel();
 }
