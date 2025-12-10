@@ -77,8 +77,6 @@ public class Bullet : MonoBehaviour
 
             GameObject newImpactFx = ObjectPool.instance.GetObject(bulletImpactFX);
             newImpactFx.transform.position = contact.point;
-
-            Destroy(newImpactFx, 1f);
             ObjectPool.instance.ReturnObject(newImpactFx, 1);
         }
     }

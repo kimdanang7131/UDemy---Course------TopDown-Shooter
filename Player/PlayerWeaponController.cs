@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class PlayerWeaponController : MonoBehaviour
 {
@@ -23,12 +22,14 @@ public class PlayerWeaponController : MonoBehaviour
     [SerializeField] private int maxSlots = 2;
     [SerializeField] private List<Weapon> weaponSlots;
 
+    [SerializeField] private GameObject weaponPickupPrefab;
+
     void Start()
     {
         player = GetComponent<Player>();
         AssignInputEvents();
 
-        Invoke(nameof(EquipStartingWeapon), 1f);
+        Invoke(nameof(EquipStartingWeapon), .1f);
     }
 
     void Update()
@@ -73,12 +74,26 @@ public class PlayerWeaponController : MonoBehaviour
         // CameraManager.instance.ChangeCameraDistance(currentWeapon.cameraDistance);
     }
 
-    public void PickupWeapon(Weapon_Data newWeaponData)
+    // WeaponData였는데 Wepaon 으로 변경 -> WeaponData를 하면 new Weapon()해서 원래 탄약이 사라지기 때문에
+    public void PickupWeapon(Weapon newWeapon)
     {
-        if (weaponSlots.Count >= maxSlots)
+        if (WeaponInSlots(newWeapon.weaponType) != null)
+        {
+            WeaponInSlots(newWeapon.weaponType).totalReserveAmmo += newWeapon.bulletsInMagazine;
             return;
+        }
 
-        Weapon newWeapon = new Weapon(newWeaponData);
+        if (weaponSlots.Count >= maxSlots && newWeapon.weaponType != currentWeapon.weaponType)
+        {
+            int weaponIndex = weaponSlots.IndexOf(currentWeapon);
+
+            player.weaponVisuals.SwitchOffWeaponModels();
+            weaponSlots[weaponIndex] = newWeapon;
+
+            CreateWeaponOnTheGround();
+            EquipWeapon(weaponIndex);
+            return;
+        }
 
         weaponSlots.Add(newWeapon);
         player.weaponVisuals.SwitchOnBackupWeaponModel();
@@ -89,9 +104,17 @@ public class PlayerWeaponController : MonoBehaviour
         if (HasOnlyOneWeapon())
             return;
 
-        player.weaponVisuals.SwitchOffWeaponModels(); // ?
+        CreateWeaponOnTheGround();
+
+        player.weaponVisuals.SwitchOffWeaponModels(); // 따로 추가한것
         weaponSlots.Remove(currentWeapon);
         EquipWeapon(0);
+    }
+
+    private void CreateWeaponOnTheGround()
+    {
+        GameObject droppedWeapon = ObjectPool.instance.GetObject(weaponPickupPrefab);
+        droppedWeapon.GetComponent<Pickup_Weapon>()?.SetupPickupWeapon(currentWeapon, transform);
     }
 
     public void SetWeaponReady(bool ready) => weaponReady = ready;

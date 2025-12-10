@@ -21,6 +21,7 @@ public enum ShootType
 public class Weapon
 {
     public WeaponType weaponType;
+    public ShootType shootType;
 
     #region Regular mode variables
     private float defaultFireRate;
@@ -39,7 +40,7 @@ public class Weapon
 
     #endregion
 
-    public ShootType shootType;
+
     public int bulletsPerShot { get; private set; }
 
     [Header("Magazine details")]
@@ -67,6 +68,7 @@ public class Weapon
     private float spreadCooldown = 1;
     #endregion
 
+    public Weapon_Data weaponData { get; private set; }
 
     public Weapon(Weapon_Data weaponData)
     {
@@ -97,6 +99,8 @@ public class Weapon
         cameraDistance = weaponData.cameraDistance;
 
         defaultFireRate = fireRate;
+
+        this.weaponData = weaponData;
     }
 
     #region Spread Methods
