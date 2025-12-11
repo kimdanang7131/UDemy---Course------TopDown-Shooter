@@ -13,6 +13,7 @@ public class ObjectPool : MonoBehaviour
     [Header("To Initialize")]
     [SerializeField] private GameObject weaponPickup;
     [SerializeField] private GameObject ammoPickup;
+    [SerializeField] private GameObject enemyAxe;
 
     void Awake()
     {
