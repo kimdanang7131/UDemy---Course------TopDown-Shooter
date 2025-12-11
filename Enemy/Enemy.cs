@@ -19,7 +19,10 @@ public class Enemy : MonoBehaviour
     private bool manualRotation;
 
     [SerializeField] private Transform[] patrolPoints;
+    private Vector3[] patrolPointsPosition;
     private int currentPatrolIndex = 0;
+
+    public bool inBattleMode { get; private set; }
 
     public Transform player { get; private set; }
 
@@ -47,33 +50,57 @@ public class Enemy : MonoBehaviour
     {
     }
 
+    protected bool ShouldEnterBattleMode()
+    {
+        bool inAgressionRange = Vector3.Distance(transform.position, player.position) < agressionRange;
+
+        if (inAgressionRange && !inBattleMode)
+        {
+            EnterBattleMode();
+            return true;
+        }
+
+        return false;
+    }
+
+    public virtual void EnterBattleMode()
+    {
+        inBattleMode = true;
+    }
+
     public virtual void GetHit()
     {
+        EnterBattleMode();
         healthPoints--;
     }
 
-    public virtual void HitImpact(Vector3 force, Vector3 hitPoint, Rigidbody hitRigidbody)
+    public virtual void DeathImpact(Vector3 force, Vector3 hitPoint, Rigidbody hitRigidbody)
     {
-        StartCoroutine(ImpactCoroutine(force, hitPoint, hitRigidbody));
+        StartCoroutine(DeathImpactCoroutine(force, hitPoint, hitRigidbody));
     }
 
-    private IEnumerator ImpactCoroutine(Vector3 force, Vector3 hitPoint, Rigidbody rb)
+    private IEnumerator DeathImpactCoroutine(Vector3 force, Vector3 hitPoint, Rigidbody rb)
     {
         yield return new WaitForSeconds(.1f);
 
         rb.AddForceAtPosition(force, hitPoint, ForceMode.Impulse);
     }
 
-    protected virtual void OnDrawGizmos()
+    public void FaceTarget(Vector3 target)
     {
-        Gizmos.DrawWireSphere(transform.position, agressionRange);
+        Quaternion targetRotation = Quaternion.LookRotation(target - transform.position);
+        Vector3 currentEulerAngles = transform.rotation.eulerAngles;
+
+        float yRotation = Mathf.LerpAngle(currentEulerAngles.y, targetRotation.eulerAngles.y, turnSpeed * Time.deltaTime);
+        transform.rotation = Quaternion.Euler(currentEulerAngles.x, yRotation, currentEulerAngles.z);
     }
 
-    public bool PlayerInAgressionRange() => Vector3.Distance(transform.position, player.position) < agressionRange;
+    #region Patrol logics
 
     public Vector3 GetPatrolDestination()
     {
-        Vector3 destionation = patrolPoints[currentPatrolIndex].transform.position;
+        Vector3 destionation = patrolPointsPosition[currentPatrolIndex];
+
         currentPatrolIndex++;
 
         if (currentPatrolIndex >= patrolPoints.Length)
@@ -84,20 +111,18 @@ public class Enemy : MonoBehaviour
 
     private void IntializePatrolPoints()
     {
-        foreach (Transform t in patrolPoints)
+        patrolPointsPosition = new Vector3[patrolPoints.Length];
+
+        for (int i = 0; i < patrolPoints.Length; i++)
         {
-            t.parent = null;
+            patrolPointsPosition[i] = patrolPoints[i].position;
+            patrolPoints[i].gameObject.SetActive(false);
         }
     }
 
-    public Quaternion FaceTarget(Vector3 target)
-    {
-        Quaternion targetRotation = Quaternion.LookRotation(target - transform.position);
-        Vector3 currentEulerAngles = transform.rotation.eulerAngles;
+    #endregion
 
-        float yRotation = Mathf.LerpAngle(currentEulerAngles.y, targetRotation.eulerAngles.y, turnSpeed * Time.deltaTime);
-        return Quaternion.Euler(currentEulerAngles.x, yRotation, currentEulerAngles.z);
-    }
+    #region Animation events
 
     public void ActivateManualMovenment(bool manualMovenment) => this.manualMovenment = manualMovenment;
     public bool ManualMovementActive() => manualMovenment;
@@ -106,4 +131,16 @@ public class Enemy : MonoBehaviour
     public bool ManualRotationActive() => manualRotation;
 
     public void AnimationTrigger() => stateMachine.currentState.AnimationTrigger();
+
+    public virtual void AbilityTrigger()
+    {
+        stateMachine.currentState.AbilityTrigger();
+    }
+    #endregion
+
+
+    protected virtual void OnDrawGizmos()
+    {
+        Gizmos.DrawWireSphere(transform.position, agressionRange);
+    }
 }

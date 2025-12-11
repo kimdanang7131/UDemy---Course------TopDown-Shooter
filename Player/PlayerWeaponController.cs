@@ -143,6 +143,7 @@ public class PlayerWeaponController : MonoBehaviour
         }
 
         FireSingleBullet();
+        TriggerEnemyDodge();
     }
 
     private void FireSingleBullet()
@@ -204,6 +205,20 @@ public class PlayerWeaponController : MonoBehaviour
     }
 
     public Transform Gunpoint() => player.weaponVisuals.CurrentWeaponModel().gunPoint;
+
+    private void TriggerEnemyDodge()
+    {
+        Vector3 rayOrigin = Gunpoint().position;
+        Vector3 rayDirection = BulletDirection();
+
+        if (Physics.Raycast(rayOrigin, rayDirection, out RaycastHit hit, Mathf.Infinity))
+        {
+            Enemy_Melee enemy_Melee = hit.collider.GetComponentInParent<Enemy_Melee>();
+
+            if (enemy_Melee != null)
+                enemy_Melee.ActivateDodgeRoll();
+        }
+    }
 
     #region Input Events
 

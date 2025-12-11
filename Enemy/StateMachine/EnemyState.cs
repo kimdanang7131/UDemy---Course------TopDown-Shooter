@@ -36,6 +36,10 @@ public class EnemyState
     }
 
     public void AnimationTrigger() => triggerCalled = true;
+    public virtual void AbilityTrigger()
+    {
+
+    }
 
     // 코너에서 회전할때 문제가 발생해서 예외처리한 코드
     protected Vector3 GetNextPathPoint()

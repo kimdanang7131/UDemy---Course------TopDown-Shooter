@@ -29,7 +29,7 @@ public class ChaseState_Melee : EnemyState
             stateMachine.ChangeState(enemy.attackState);
 
 
-        enemy.transform.rotation = enemy.FaceTarget(GetNextPathPoint());
+        enemy.FaceTarget(GetNextPathPoint());
 
         if (CanUpdateDestinaion())
             enemy.agent.destination = enemy.player.position;
@@ -50,5 +50,13 @@ public class ChaseState_Melee : EnemyState
         }
 
         return false;
+    }
+
+    private void CheckChaseAnimation()
+    {
+        if (enemy.meleeType == EnemyMelee_Type.Shield && enemy.shieldTransform == null)
+        {
+            enemy.anim.SetFloat("ChaseIndex", 0);
+        }
     }
 }
