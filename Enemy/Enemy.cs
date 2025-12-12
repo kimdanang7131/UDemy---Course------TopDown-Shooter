@@ -12,8 +12,8 @@ public class Enemy : MonoBehaviour
     public float agressionRange;
 
     [Header("Move data")]
-    public float moveSpeed;
-    public float chaseSpeed;
+    public float walkSpeed = 1.5f;
+    public float runSpeed = 3;
     public float turnSpeed;
     private bool manualMovenment;
     private bool manualRotation;
@@ -29,14 +29,16 @@ public class Enemy : MonoBehaviour
     public Animator anim { get; private set; }
     public NavMeshAgent agent { get; private set; }
     public EnemyStateMachine stateMachine { get; private set; }
+    public Enemy_Visuals visuals { get; private set; }
 
     protected virtual void Awake()
     {
         stateMachine = new EnemyStateMachine();
 
+        visuals = GetComponent<Enemy_Visuals>();
+
         agent = GetComponent<NavMeshAgent>();
         anim = GetComponentInChildren<Animator>();
-
         // 성능에 안좋기때문에 나중에 바꾸기
         player = GameObject.Find("Player").GetComponent<Transform>();
     }
@@ -48,6 +50,8 @@ public class Enemy : MonoBehaviour
 
     protected virtual void Update()
     {
+        if (ShouldEnterBattleMode())
+            EnterBattleMode();
     }
 
     protected bool ShouldEnterBattleMode()

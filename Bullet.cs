@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    public float impactForce;
+    private float impactForce;
 
     private BoxCollider cd;
     private Rigidbody rb;
@@ -15,7 +15,7 @@ public class Bullet : MonoBehaviour
     private float flyDistance;
     private bool bulletDisabled;
 
-    void Awake()
+    protected virtual void Awake()
     {
         cd = GetComponent<BoxCollider>();
         rb = GetComponent<Rigidbody>();
@@ -23,20 +23,20 @@ public class Bullet : MonoBehaviour
         meshRenderer = GetComponent<MeshRenderer>();
     }
 
-    void Update()
+    protected virtual void Update()
     {
         FadeTrailVisualsIfNeeded();
         DisableBulletIfNeeded();
         ReturnToPoolIfNeeded();
     }
 
-    private void ReturnToPoolIfNeeded()
+    protected virtual void ReturnToPoolIfNeeded()
     {
         if (trailRenderer.time < 0)
             ReturnBulletToPool();
     }
 
-    private void DisableBulletIfNeeded()
+    protected virtual void DisableBulletIfNeeded()
     {
         if (Vector3.Distance(startPosition, transform.position) > flyDistance && !bulletDisabled)
         {
@@ -46,13 +46,13 @@ public class Bullet : MonoBehaviour
         }
     }
 
-    private void FadeTrailVisualsIfNeeded()
+    protected void FadeTrailVisualsIfNeeded()
     {
         if (Vector3.Distance(startPosition, transform.position) > flyDistance - 1.5f)
             trailRenderer.time -= 2 * Time.deltaTime;
     }
 
-    public void BulletSetup(float flyDistance, float impactForce)
+    public void BulletSetup(float flyDistance = 100, float impactForce = 100)
     {
         this.impactForce = impactForce;
 
@@ -65,7 +65,7 @@ public class Bullet : MonoBehaviour
         this.flyDistance = flyDistance + .5f;
     }
 
-    void OnCollisionEnter(Collision collision)
+    protected virtual void OnCollisionEnter(Collision collision)
     {
         CreateImpactFx(collision);
         ReturnBulletToPool();
@@ -90,9 +90,9 @@ public class Bullet : MonoBehaviour
         }
     }
 
-    private void ReturnBulletToPool() => ObjectPool.instance.ReturnObject(gameObject);
+    protected virtual void ReturnBulletToPool() => ObjectPool.instance.ReturnObject(gameObject);
 
-    private void CreateImpactFx(Collision collision)
+    protected virtual void CreateImpactFx(Collision collision)
     {
         if (collision.contacts.Length > 0)
         {
