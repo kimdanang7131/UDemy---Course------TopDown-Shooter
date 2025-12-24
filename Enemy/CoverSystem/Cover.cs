@@ -57,27 +57,18 @@ public class Cover : MonoBehaviour
             return false;
 
         if (IsFurtherestFromPlayer(coverPoint) == false)
-        {
-            Debug.Log("Not the furthest from player");
             return false;
-        }
 
         // 너무 플레이어 가까이에 있다면 제외 
         if (IsCoverCloseToPlayer(coverPoint))
-        {
-            Debug.Log("Cover too close to player");
             return false;
-        }
 
         // CoverPoint기준 적보다 플레이어가 더 가까우면 false
         if (IsCoverBehindPlayer(coverPoint, enemy))
-        {
-            Debug.Log("Cover is behind player + " + coverPoint.transform.position);
             return false;
-        }
 
-        // if (IsCoverCloseToLastCover(coverPoint, enemy))
-        //     return false;
+        if (IsCoverCloseToLastCover(coverPoint, enemy))
+            return false;
 
         return true;
     }
@@ -117,7 +108,7 @@ public class Cover : MonoBehaviour
 
     private bool IsCoverCloseToLastCover(CoverPoint coverPoint, Transform enemy)
     {
-        CoverPoint lastCoverPoint = enemy.GetComponent<Enemy_Range>().lastCoverPoint;
-        return lastCoverPoint != null && Utility.DistanceToTarget(coverPoint.transform.position, enemy.position) < 3;
+        CoverPoint currentCoverPoint = enemy.GetComponent<Enemy_Range>().currentCoverPoint;
+        return currentCoverPoint != null && Utility.DistanceToTarget(coverPoint.transform.position, enemy.position) < 3;
     }
 }

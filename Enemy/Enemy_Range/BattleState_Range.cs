@@ -28,15 +28,28 @@ public class BattleState_Range : EnemyState
 
         enemy.visuals.EnableIK(true, true);
         enemy.agent.isStopped = true;
+        enemy.agent.velocity = Vector3.zero;
     }
 
     public override void Update()
     {
         base.Update();
 
-        ChangeCoverIfShould();
+        // Player가 agressionRange == false이면 change state
 
-        enemy.FaceTarget(enemy.player.position);
+        if (enemy.IsSeenPlayer())
+        {
+            Debug.Log("Seen Player - Aiming");
+            enemy.FaceTarget(enemy.aim.position);
+        }
+
+        if (enemy.IsPlayerInAgressionRange() == false)
+        {
+            stateMachine.ChangeState(enemy.advancePlayerState);
+            return;
+        }
+
+        ChangeCoverIfShould();
 
         if (WeaponOutOfBullets())
         {
@@ -54,13 +67,16 @@ public class BattleState_Range : EnemyState
 
     private void ChangeCoverIfShould()
     {
+        if (enemy.coverPerk != CoverPerk.CanTakeAndChangeCover)
+            return;
+
         coverCheckTimer -= Time.deltaTime;
 
         if (coverCheckTimer < 0)
         {
             coverCheckTimer = .5f;
 
-            if (IsPlayerInClearSight())
+            if (IsPlayerInClearSight() || IsPlayerClose())
             {
                 if (enemy.CanGetCover())
                     stateMachine.ChangeState(enemy.runToCoverState);
@@ -69,6 +85,11 @@ public class BattleState_Range : EnemyState
 
     }
     #region Cover system region
+
+    private bool IsPlayerClose()
+    {
+        return Utility.DistanceToTarget(enemy.transform.position, enemy.player.position) < enemy.safeDistance;
+    }
 
     private bool IsPlayerInClearSight()
     {

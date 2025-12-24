@@ -1,12 +1,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+public enum CoverPerk { Unavailable, CanTakeCover, CanTakeAndChangeCover }
+
 public class Enemy_Range : Enemy
 {
+    [Header("Perk")]
+    public CoverPerk coverPerk;
+    public CoverPerk lastCoverPerk { get; private set; }
+
+    [Header("Advance perk")]
+    public float advanceSpeed;
+    public float advanceStoppingDistance;
+
     [Header("Cover System")]
-    public bool canUseCovers = true;
-    public CoverPoint currentCoverPoint { get; private set; }
-    public CoverPoint lastCoverPoint;
+    public float safeDistance;
+    public CoverPoint currentCoverPoint;
 
     [Header("Weapon details")]
     public Enemy_RangeWeaponType weaponType;
@@ -17,12 +27,20 @@ public class Enemy_Range : Enemy
     public Transform gunPoint;
     public GameObject bulletPrefab;
 
+    [Header("Aim details")]
+    public float slowAim = 4;
+    public float fastAim = 20;
+    public Transform aim;
+    public Transform playersBody;
+    public LayerMask whatToIgnore;
+
     [SerializeField] List<Enemy_RangeWeaponData> availableWeaponData;
 
     public IdleState_Range idleState { get; private set; }
     public MoveState_Range moveState { get; private set; }
     public BattleState_Range battleState { get; private set; }
     public RunToCoverState_Range runToCoverState { get; private set; }
+    public AdvancePlayer_Range advancePlayerState { get; private set; }
 
     public LayerMask playerLayerMask;
     protected override void Awake()
@@ -33,11 +51,15 @@ public class Enemy_Range : Enemy
         moveState = new MoveState_Range(this, stateMachine, "Move");
         battleState = new BattleState_Range(this, stateMachine, "Battle");
         runToCoverState = new RunToCoverState_Range(this, stateMachine, "Run");
+        advancePlayerState = new AdvancePlayer_Range(this, stateMachine, "Advance");
     }
 
     protected override void Start()
     {
         base.Start();
+
+        playersBody = player.GetComponent<Player>().playerbody;
+        aim.parent = null;
 
         stateMachine.Initialize(idleState);
         visuals.SetupLook();
@@ -54,17 +76,16 @@ public class Enemy_Range : Enemy
 
     public bool CanGetCover()
     {
-        if (canUseCovers == false)
+        if (coverPerk == CoverPerk.Unavailable)
             return false;
 
         currentCoverPoint = AttemptToFindCover()?.GetComponent<CoverPoint>();
 
-        if (lastCoverPoint != currentCoverPoint && currentCoverPoint != null)
+        if (currentCoverPoint != null)
         {
-            // 첫 시작시
-            if (lastCoverPoint == null)
-                lastCoverPoint = currentCoverPoint;
-
+            currentCoverPoint.SetOccupied(true);
+            lastCoverPerk = coverPerk;
+            coverPerk = CoverPerk.Unavailable;
             return true;
         }
 
@@ -96,14 +117,9 @@ public class Enemy_Range : Enemy
 
         if (furthestCoverPoint != null)
         {
-            lastCoverPoint?.SetOccupied(false);
-            lastCoverPoint = currentCoverPoint;
-
-            furthestCoverPoint.SetOccupied(true);
-
+            currentCoverPoint?.SetOccupied(false);
             return furthestCoverPoint.transform;
         }
-
         return null;
     }
 
@@ -129,7 +145,7 @@ public class Enemy_Range : Enemy
     {
         anim.SetTrigger("Shoot");
 
-        Vector3 bulletsDirection = ((player.position + Vector3.up) - gunPoint.position).normalized;
+        Vector3 bulletsDirection = (aim.position - gunPoint.position).normalized;
 
         GameObject newBullet = ObjectPool.instance.GetObject(bulletPrefab);
         newBullet.transform.position = gunPoint.position;
@@ -181,10 +197,44 @@ public class Enemy_Range : Enemy
     }
 
 
+    #region Enemy's Aim
+    public void UpdateAimPosition()
+    {
+        float aimSpeed = AimOnPlayer() ? fastAim : slowAim;
+        aim.position = Vector3.MoveTowards(aim.position, playersBody.position, aimSpeed * Time.deltaTime);
+    }
+
+    public bool AimOnPlayer()
+    {
+        float distanceAimToPlayer = Utility.DistanceToTarget(aim.position, playersBody.position);
+        return distanceAimToPlayer < 2;
+    }
+
+
+    public bool IsSeenPlayer()
+    {
+        Vector3 myPosition = transform.position + Vector3.up;
+        Vector3 directionToPlayer = playersBody.position - myPosition;
+
+        if (Physics.Raycast(myPosition, directionToPlayer, out RaycastHit hit, Mathf.Infinity, ~whatToIgnore))
+        {
+            if (hit.transform == player)
+            {
+                Debug.Log(hit.transform.gameObject.name);
+                UpdateAimPosition();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    #endregion
+
     protected override void OnDrawGizmos()
     {
         base.OnDrawGizmos();
-        Gizmos.DrawLine(transform.position + Vector3.up, transform.position + Vector3.up + transform.forward * 1);
+        // Gizmos.DrawLine(transform.position + Vector3.up, transform.position + Vector3.up + transform.forward * 1);
 
         // Gizmos.color = Color.yellow;
         // Vector3 directionToPlayer = (player.transform.position - transform.position).normalized;

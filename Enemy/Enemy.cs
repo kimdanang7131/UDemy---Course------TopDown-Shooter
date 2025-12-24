@@ -56,9 +56,7 @@ public class Enemy : MonoBehaviour
 
     protected bool ShouldEnterBattleMode()
     {
-        bool inAgressionRange = Vector3.Distance(transform.position, player.position) < agressionRange;
-
-        if (inAgressionRange && !inBattleMode)
+        if (IsPlayerInAgressionRange() && !inBattleMode)
         {
             EnterBattleMode();
             return true;
@@ -142,6 +140,8 @@ public class Enemy : MonoBehaviour
     }
     #endregion
 
+
+    public bool IsPlayerInAgressionRange() => Utility.DistanceToTarget(transform.position, player.position) < agressionRange;
 
     protected virtual void OnDrawGizmos()
     {

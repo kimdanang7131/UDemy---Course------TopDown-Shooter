@@ -37,6 +37,10 @@ public class RunToCoverState_Range : EnemyState
     public override void Exit()
     {
         base.Exit();
-        // enemy.lastCoverPoint?.SetOccupied(false);
+
+        if (enemy.lastCoverPerk == CoverPerk.CanTakeAndChangeCover)
+        {
+            enemy.coverPerk = CoverPerk.CanTakeAndChangeCover;
+        }
     }
 }
